@@ -5,46 +5,46 @@ export class Board {
     blackKingLoc //location of black king
 
     //default constructor for initial game state
-    //still requires inserting pieces
     constructor() {
-        this.whiteKingLoc = [0,4]
-        this.blackKingLoc = [7,4]
+        this.whiteKingLoc = [0, 4]
+        this.blackKingLoc = [7, 4]
+        this.turn = 1
 
         for (let i = 0; i < 8; i++) {
             const row = []
             for (let j = 0; j < 8; j++) {
                 if (i == 1) {
-                    const space = new Space(new Pawn([i,j],-1), [i,j])
+                    const space = new Space(new Pawn([i, j], -1), [i, j])
                 }
                 else if (i == 6) {
-                    const space = new Space(new Pawn([i,j],1), [i,j])
+                    const space = new Space(new Pawn([i, j], 1), [i, j])
                 }
                 //black bank rank
                 else if (i == 0) {
                     //inserts all special pieces at appropriate locations
-                    if (j == 0 || j == 7) {const space = new Space(new Rook([i,j],-1), [i,j])}
-                    else if (j == 1 || j == 6) {const space = new Space(new Knight([i,j],-1), [i,j])}
-                    else if (j == 2 || j == 5) {const space = new Space(new Bishop([i,j],-1), [i,j])}
-                    else if (j == 3) {const space = new Space(new Queen([i,j],-1), [i,j])}
+                    if (j == 0 || j == 7) { const space = new Space(new Rook([i, j], -1), [i, j]) }
+                    else if (j == 1 || j == 6) { const space = new Space(new Knight([i, j], -1), [i, j]) }
+                    else if (j == 2 || j == 5) { const space = new Space(new Bishop([i, j], -1), [i, j]) }
+                    else if (j == 3) { const space = new Space(new Queen([i, j], -1), [i, j]) }
                     else {
-                        this.blackKingLoc = [i,j]
-                        const space = new Space(new King([i,j],-1), [i,j])
+                        this.blackKingLoc = [i, j]
+                        const space = new Space(new King([i, j], -1), [i, j])
                     }
                 }
                 //white back rank
                 else if (i == 7) {
                     //inserts all special pieces at appropriate locations
-                    if (j == 0 || j == 7) {const space = new Space(new Rook([i,j],1), [i,j])}
-                    else if (j == 1 || j == 6) {const space = new Space(new Knight([i,j],1), [i,j])}
-                    else if (j == 2 || j == 5) {const space = new Space(new Bishop([i,j],1), [i,j])}
-                    else if (j == 3) {const space = new Space(new Queen([i,j],1), [i,j])}
+                    if (j == 0 || j == 7) { const space = new Space(new Rook([i, j], 1), [i, j]) }
+                    else if (j == 1 || j == 6) { const space = new Space(new Knight([i, j], 1), [i, j]) }
+                    else if (j == 2 || j == 5) { const space = new Space(new Bishop([i, j], 1), [i, j]) }
+                    else if (j == 3) { const space = new Space(new Queen([i, j], 1), [i, j]) }
                     else {
-                        this.whiteKingLoc = [i,j]
-                        const space = new Space(new King([i,j],1), [i,j])
+                        this.whiteKingLoc = [i, j]
+                        const space = new Space(new King([i, j], 1), [i, j])
                     }
                 }
                 else { //empty space case
-                    const space = new Space(null, [i,j])
+                    const space = new Space(null, [i, j])
                 }
                 row.push(space)
             }
@@ -70,18 +70,39 @@ export class Board {
 
     //moves piece by modifying this board and returning the new board as well
     //checks if move is legal
-    //NEED TO UPDATE KING LOCATION WHEN MOVED
     move(fromSpace, toSpace) {
         if (this.isValidMove(fromSpace, toSpace)) {
+            //updates king location if necessary
+            if (fromSpace.piece instanceof King) {
+                if (fromSpace.piece.color == 1) { this.whiteKingLoc = toSpace.loc }
+                else { this.blackKingLoc = toSpace.loc }
+            }
+            turn *= -1
             temp = fromSpace.piece
             fromSpace.piece = null
             temp.loc = toSpace.loc
             toSpace.piece = temp
+
             return this
         }
         else {
             return
         }
+    }
+
+    //returns 1 if white has won, -1 if black has won and 0 otherwise
+    hasWinner() {
+        blackKing = this.spaces[this.blackKingLoc[0]][this.blackKingLoc[1]]
+        whiteKing = this.spaces[this.whiteKingLoc[0]][this.whiteKingLoc[1]]
+
+        
+        if (blackKing.moveSet()[0].length == 0 && this.hasCheck() == -1) {
+            return -1
+        }
+        else if (whiteKing.moveSet()[0].length == 0 && this.hasCheck() == 1) {
+            return 1
+        }
+        return 0
     }
 
     //moves a piece without checking if proper criteria are met
@@ -100,13 +121,13 @@ export class Board {
     //Evaluates whether or not the fromSpace's piece can move to the toSpace
     isValidMove(fromSpace, toSpace) {
         const piece = fromSpace.piece
-        
-        return piece.moveSet(this).contains(toSpace) && !(piece==null) && !(toSpace.piece==null)
+
+        return piece.moveSet(this).contains(toSpace) && !(piece == null) && !(toSpace.piece == null)
     }
 
     //Checks if a player's move puts themselves in check, thus making it illegal
     willCauseSelfCheck(piece, toSpace) {
-        if (piece == null) {return false}
+        if (piece == null) { return false }
 
         //player who made this move
         const player = piece.color
@@ -120,7 +141,7 @@ export class Board {
     hasCheck() {
         spaces.forEach(row => {
             row.forEach(space => {
-                if (space.piece!=null) {
+                if (space.piece != null) {
                     enemyKingLoc = space.piece.oppositeKing(this)
                     //checks if spaces threatened by this piece includes enemy king space
                     if (space.piece.moveset()[1].contains(enemyKingLoc)) {

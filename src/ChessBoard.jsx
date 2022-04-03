@@ -4,12 +4,10 @@ import React from 'react';
 const ChessBoard = (props) => {
     const board = props.board
 
-    //If trying to insert binding within a string, put $ before it denote
-    //that it is a variable (i.e ${props.firstName})
     return  (
         <div>
             <h6> 
-                Employee Name: {firstName}, {age}, {id}
+                TO-DO
             </h6>
         </div>
     );
