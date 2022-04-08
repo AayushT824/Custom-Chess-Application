@@ -1,70 +1,75 @@
-export class Board {
-    spaces //2D array of all spaces on the board; TOP LEFT = (0,0), BOTTOM RIGHT = (15,15)
+import Piece, { King, Queen, Bishop, Knight, Rook, Pawn} from './Pieces.js';
+
+//TO-DO: En Passant & Stalemate
+export default class Board {
+    spaces//2D array of all spaces on the board; TOP LEFT = (0,0), BOTTOM RIGHT = (15,15)
     turn //represents player turn; 1 if white, -1 if black
     whiteKingLoc //location of white king
     blackKingLoc //location of black king
 
     //default constructor for initial game state
-    constructor() {
-        this.whiteKingLoc = [0, 4]
-        this.blackKingLoc = [7, 4]
-        this.turn = 1
-
-        for (let i = 0; i < 8; i++) {
-            const row = []
-            for (let j = 0; j < 8; j++) {
-                if (i == 1) {
-                    const space = new Space(new Pawn([i, j], -1), [i, j])
-                }
-                else if (i == 6) {
-                    const space = new Space(new Pawn([i, j], 1), [i, j])
-                }
-                //black bank rank
-                else if (i == 0) {
-                    //inserts all special pieces at appropriate locations
-                    if (j == 0 || j == 7) { const space = new Space(new Rook([i, j], -1), [i, j]) }
-                    else if (j == 1 || j == 6) { const space = new Space(new Knight([i, j], -1), [i, j]) }
-                    else if (j == 2 || j == 5) { const space = new Space(new Bishop([i, j], -1), [i, j]) }
-                    else if (j == 3) { const space = new Space(new Queen([i, j], -1), [i, j]) }
-                    else {
-                        this.blackKingLoc = [i, j]
-                        const space = new Space(new King([i, j], -1), [i, j])
-                    }
-                }
-                //white back rank
-                else if (i == 7) {
-                    //inserts all special pieces at appropriate locations
-                    if (j == 0 || j == 7) { const space = new Space(new Rook([i, j], 1), [i, j]) }
-                    else if (j == 1 || j == 6) { const space = new Space(new Knight([i, j], 1), [i, j]) }
-                    else if (j == 2 || j == 5) { const space = new Space(new Bishop([i, j], 1), [i, j]) }
-                    else if (j == 3) { const space = new Space(new Queen([i, j], 1), [i, j]) }
-                    else {
-                        this.whiteKingLoc = [i, j]
-                        const space = new Space(new King([i, j], 1), [i, j])
-                    }
-                }
-                else { //empty space case
-                    const space = new Space(null, [i, j])
-                }
-                row.push(space)
-            }
-            this.spaces.push(row)
-        }
-    }
-
-    //Makes a board from existing board without referencing given list in structure at all
     constructor(board) {
-        this.whiteKingLoc = board.whiteKingLoc
-        this.blackKingLoc = board.blackKingLoc
-        this.spaces = board.spaces
+        this.spaces = []
+        if (board == undefined) { //default constructor
+            this.whiteKingLoc = [0, 4]
+            this.blackKingLoc = [7, 4]
+            this.turn = 1
 
-        for (let i = 0; i < 8; i++) {
-            const row = []
-            for (let j = 0; j < 8; j++) {
-                const space = new Space(new Piece(spaces[i][j].piece), spaces[i][j].piece.loc)
-                row.push(space)
+            for (let i = 0; i < 8; i++) {
+                let row = []
+                for (let j = 0; j < 8; j++) {
+                    let space = null
+                    if (i == 1) {
+                        space = new Space(new Pawn([i, j], -1), [i, j])
+                    }
+                    else if (i == 6) {
+                        space = new Space(new Pawn([i, j], 1), [i, j])
+                    }
+                    //black bank rank
+                    else if (i == 0) {
+                        //inserts all special pieces at appropriate locations
+                        if (j == 0 || j == 7) { const space = new Space(new Rook([i, j], -1), [i, j]) }
+                        else if (j == 1 || j == 6) { const space = new Space(new Knight([i, j], -1), [i, j]) }
+                        else if (j == 2 || j == 5) { const space = new Space(new Bishop([i, j], -1), [i, j]) }
+                        else if (j == 3) { const space = new Space(new Queen([i, j], -1), [i, j]) }
+                        else {
+                            this.blackKingLoc = [i, j]
+                            space = new Space(new King([i, j], -1), [i, j])
+                        }
+                    }
+                    //white back rank
+                    else if (i == 7) {
+                        //inserts all special pieces at appropriate locations
+                        if (j == 0 || j == 7) { const space = new Space(new Rook([i, j], 1), [i, j]) }
+                        else if (j == 1 || j == 6) { const space = new Space(new Knight([i, j], 1), [i, j]) }
+                        else if (j == 2 || j == 5) { const space = new Space(new Bishop([i, j], 1), [i, j]) }
+                        else if (j == 3) { const space = new Space(new Queen([i, j], 1), [i, j]) }
+                        else {
+                            this.whiteKingLoc = [i, j]
+                            space = new Space(new King([i, j], 1), [i, j])
+                        }
+                    }
+                    else { //empty space case
+                        space = new Space(null, [i, j])
+                    }
+                    row.push(space)
+                }
+                this.spaces.push(row)
             }
-            this.spaces.push(row)
+        }
+        else { //Makes a board from existing board without referencing given list in structure at all
+            this.whiteKingLoc = board.whiteKingLoc
+            this.blackKingLoc = board.blackKingLoc
+            this.spaces = board.spaces
+
+            for (let i = 0; i < 8; i++) {
+                const row = []
+                for (let j = 0; j < 8; j++) {
+                    const space = new Space(new Piece(this.spaces[i][j].piece), this.spaces[i][j].piece.loc)
+                    row.push(space)
+                }
+                this.spaces.push(row)
+            }
         }
     }
 
@@ -77,8 +82,8 @@ export class Board {
                 if (fromSpace.piece.color == 1) { this.whiteKingLoc = toSpace.loc }
                 else { this.blackKingLoc = toSpace.loc }
             }
-            turn *= -1
-            temp = fromSpace.piece
+            this.turn *= -1
+            const temp = fromSpace.piece
             fromSpace.piece = null
             temp.loc = toSpace.loc
             toSpace.piece = temp
@@ -92,10 +97,9 @@ export class Board {
 
     //returns 1 if white has won, -1 if black has won and 0 otherwise
     hasWinner() {
-        blackKing = this.spaces[this.blackKingLoc[0]][this.blackKingLoc[1]]
-        whiteKing = this.spaces[this.whiteKingLoc[0]][this.whiteKingLoc[1]]
+        const blackKing = this.spaces[this.blackKingLoc[0]][this.blackKingLoc[1]]
+        const whiteKing = this.spaces[this.whiteKingLoc[0]][this.whiteKingLoc[1]]
 
-        
         if (blackKing.moveSet()[0].length == 0 && this.hasCheck() == -1) {
             return -1
         }
@@ -111,7 +115,7 @@ export class Board {
         const fromSpace = this.spaces[fromLoc[0]][fromLoc[1]]
         const toSpace = this.spaces[toLoc[0]][toLoc[1]]
 
-        temp = fromSpace.piece
+        const temp = fromSpace.piece
         fromSpace.piece = null
         temp.loc = toSpace.loc
         toSpace.piece = temp
@@ -139,10 +143,10 @@ export class Board {
 
     //returns 1 if white is in check, -1 if black is in check, and 0 if no player is in check
     hasCheck() {
-        spaces.forEach(row => {
+        this.spaces.forEach(row => {
             row.forEach(space => {
                 if (space.piece != null) {
-                    enemyKingLoc = space.piece.oppositeKing(this)
+                    const enemyKingLoc = space.piece.oppositeKing(this)
                     //checks if spaces threatened by this piece includes enemy king space
                     if (space.piece.moveset()[1].contains(enemyKingLoc)) {
                         return -1 * space.piece.color

@@ -1,42 +1,49 @@
 //Superclass of all pieces
-class Piece {
+export default class Piece {
     loc //location of piece
     color //color of piece, 1 if white and -1 if black
 
-    constructor(location, color) {
-        this.loc = location;
-        this.color = color;
-    }
-
-    //creates copy of given piece
-    constructor(piece) {
-        this.loc = piece.loc;
-        this.color = piece.color;
+    constructor(location, color, piece) {
+        if (piece == undefined) {
+            this.loc = location;
+            this.color = color;
+        }
+        else { //creates copy of given piece
+            this.loc = piece.loc;
+            this.color = piece.color;
+        }
     }
 
     //returns list of possible moves from this spot by this piece and list of threatened spaces in that order
-    moveSet(board)
+    moveSet(board) {}
 
     //returns list of possible spaces that can be moved to by a long range piece in given direction(s)
     //each non-board parameter is a boolean representing whether or not to continue adding spaces in that direction
     //abstracts moveset function for all long-range pieces (rook, queen, bishop)
     spacesInDirection(board, straight, diagonal) {
-        counter = 0
-        possibleMoves = []
-        threatenedSpaces = []
+        let counter = 0
+        let possibleMoves = []
+        let threatenedSpaces = []
+
+        let top = false
+        let bottom = false
+        let topLeft = false
+        let topRight = false
+        let left = false
+        let right = false 
+        let bottomLeft = false
+        let bottomRight = false 
 
         //moves horizontal/vertical?
-        if (straight) { top = true; left = true; right = true; bottom = true; }
-        else { top = false; left = false; right = false; bottom = false; }
+        if (straight) { top = true; left = true;  right = true;  bottom = true; }
 
         //moves diagonally?
-        if (diagonal) { topLeft = true; bottomLeft = true; topRight = true; bottomRight = true; }
-        else { topLeft = false; bottomLeft = false; topRight = false; bottomRight = false; }
+        if (diagonal) {  topLeft = true;  bottomLeft = true;  topRight = true;  bottomRight = true; }
 
         //runs loop until all directions have reached a termination space
         while (topLeft && top && topRight && right && bottomRight && bottom && bottomLeft && left) {
-            x = this.loc[0] //x location of this piece
-            y = this.loc[1] //y location of this piece
+            const x = this.loc[0] //x location of this piece
+            const y = this.loc[1] //y location of this piece
 
             //check if next space would be out of bounds
             if (x - counter < 0) { topLeft = false; left = false; bottomLeft = false }
@@ -73,7 +80,7 @@ class Piece {
             counter += 1
         }
 
-        return [possibleSpaces, threatenedSpaces];
+        return [possibleMoves, threatenedSpaces];
     }
 
     //further abstracts behavior from spacesInDirection method
@@ -106,23 +113,19 @@ class Piece {
     }
 }
 
-class King extends Piece {
-    constructor(loc, color) {
-        super(loc, color);
-    }
-
-    constructor(piece) {
-        super(piece)
+export class King extends Piece {
+    constructor(loc, color, piece) {
+        super(loc, color, piece);
     }
 
     //King moveset
     moveSet(board) {
-        possibleSpaces = []
-        threatenedSpaces = []
+        let possibleSpaces = []
+        let threatenedSpaces = []
         //iterate through rows
-        for (let i = loc[0] - 1; i < loc[0] + 2; i++) {
+        for (let i = this.loc[0] - 1; i < this.loc[0] + 2; i++) {
             //iterate through columns
-            for (let j = loc[1] - 1; j < loc[1] + 2; j++) {
+            for (let j = this.loc[1] - 1; j < this.loc[1] + 2; j++) {
                 //valid space to move to
                 if (i >= 0 && i <= 7 && j >= 0 && j <= 7 && [i, j] != this.loc &&
                     (board.spaces[i][j].piece == null || board.spaces[i][j].piece.color != this.color)) {
@@ -139,13 +142,9 @@ class King extends Piece {
     }
 }
 
-class Queen extends Piece {
-    constructor(loc, color) {
-        super(loc, color);
-    }
-
-    constructor(piece) {
-        super(piece)
+export class Queen extends Piece {
+    constructor(loc, color, piece) {
+        super(loc, color, piece);
     }
 
     moveSet(board) {
@@ -154,13 +153,9 @@ class Queen extends Piece {
     }
 }
 
-class Bishop extends Piece {
-    constructor(loc, color) {
-        super(loc, color);
-    }
-
-    constructor(piece) {
-        super(piece)
+export class Bishop extends Piece {
+    constructor(loc, color, piece) {
+        super(loc, color, piece);
     }
 
     moveSet(board) {
@@ -169,13 +164,9 @@ class Bishop extends Piece {
     }
 }
 
-class Knight extends Piece {
-    constructor(loc, color) {
-        super(loc, color);
-    }
-
-    constructor(piece) {
-        super(piece)
+export class Knight extends Piece {
+    constructor(loc, color, piece) {
+        super(loc, color, piece);
     }
 
     moveSet(board) {
@@ -183,14 +174,14 @@ class Knight extends Piece {
         const threatenedSpaces = []
 
         //All moves a knight could make assuming on an empty board with spaces on all sides
-        moves = [[loc[0] - 2, loc[1] - 1], [loc[0] - 1, loc[1] - 2], [loc[0] + 2, loc[1] - 1],
-        [loc[0] + 1, loc[1] - 2], [loc[0] - 2, loc[1] + 1], [loc[0] - 1, loc[1] + 2], [loc[0] + 1, loc[1] + 2],
-        [loc[0] + 2, loc[1] + 1]]
+        const moves = [[this.loc[0] - 2, this.loc[1] - 1], [this.loc[0] - 1, this.loc[1] - 2], [this.loc[0] + 2, this.loc[1] - 1],
+        [this.loc[0] + 1, this.loc[1] - 2], [this.loc[0] - 2, this.loc[1] + 1], [this.loc[0] - 1, this.loc[1] + 2], [this.loc[0] + 1, this.loc[1] + 2],
+        [this.loc[0] + 2, this.loc[1] + 1]]
 
         //loops through each move and decides whether or not it is possible and/or if it is a threatened space
         moves.forEach(item => {
             if (item[0] > 0 && item[0] <= 7 && item[1] > 0 && item[1] <= 7) {
-                nextSpace = board.spaces[item[0]][item[1]]
+                const nextSpace = board.spaces[item[0]][item[1]]
                 if (nextSpace.piece == null && !board.willCauseSelfCheck(this, nextSpace)) {
                     possibleMoves.push([item[0], item[1]])
                     threatenedSpaces.push([item[0], item[1]])
@@ -206,17 +197,13 @@ class Knight extends Piece {
             }
         })
 
-        return [possibleSpaces, threatenedSpaces];
+        return [possibleMoves, threatenedSpaces];
     }
 }
 
-class Rook extends Piece {
-    constructor(loc, color) {
-        super(loc, color);
-    }
-
-    constructor(piece) {
-        super(piece)
+export class Rook extends Piece {
+    constructor(loc, color, piece) {
+        super(loc, color, piece);
     }
 
     moveSet(board) {
@@ -225,33 +212,32 @@ class Rook extends Piece {
     }
 }
 
-class Pawn extends Piece {
-    hasMoved //represents whether or not this piece has made its first move
-
-    constructor(loc, color) {
-        super(loc, color);
-        this.hasMoved = false
-    }
-
-    constructor(piece) {
-        super(piece)
-        this.hasMoved = piece.hasMoved
+export class Pawn extends Piece {
+    constructor(loc, color, piece) {
+        if (piece == undefined) {
+            super(loc, color, piece);
+            this.hasMoved = false
+        }
+        else {
+            super(loc, color, piece);
+            this.hasMoved = piece.hasMoved
+        }
     }
 
     moveSet(board) {
-        const x = loc[0]
-        const y = loc[1]
-        possibleMoves = []
-        threatenedSpaces = []
+        const x = this.loc[0]
+        const y = this.loc[1]
+        let possibleMoves = []
+        let threatenedSpaces = []
 
         //if color is white (starts on bottom)
         if (this.color == 1) {
             //scenarios where only one space forward is a legal move
-            if (board.spaces[x][y - 1].piece == null && (hasMoved || (!hasMoved && board.spaces[x][y - 2].piece != null))) {
+            if (board.spaces[x][y - 1].piece == null && (this.hasMoved || (!this.hasMoved && board.spaces[x][y - 2].piece != null))) {
                 possibleMoves = [[x, y - 1]]
             }
             //scenarios where one and two spaces forward are legal moves
-            else if (!hasMoved && board.spaces[x][y - 1].piece == null && board.spaces[x][y - 2].piece == null) {
+            else if (!this.hasMoved && board.spaces[x][y - 1].piece == null && board.spaces[x][y - 2].piece == null) {
                 possibleMoves = [[x, y - 1], [x, y - 2]]
             }
 
@@ -271,11 +257,11 @@ class Pawn extends Piece {
         }
         else {
             //scenarios where only one space forward is a legal move
-            if (board.spaces[x][y + 1].piece == null && (hasMoved || (!hasMoved && board.spaces[x][y + 2].piece != null))) {
+            if (board.spaces[x][y + 1].piece == null && (this.hasMoved || (!this.hasMoved && board.spaces[x][y + 2].piece != null))) {
                 possibleMoves = [[x, y + 1]]
             }
             //scenarios where one and two spaces forward are legal moves
-            else if (!hasMoved && board.spaces[x][y - 1].piece == null && board.spaces[x][y - 2].piece == null) {
+            else if (!this.hasMoved && board.spaces[x][y - 1].piece == null && board.spaces[x][y - 2].piece == null) {
                 possibleMoves = [[x, y + 1], [x, y + 2]]
             }
 
