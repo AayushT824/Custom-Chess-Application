@@ -1,21 +1,15 @@
 import './App.css';
 import * as React from 'react';
-import bg from './Background.jpg'
 import ChessBoard from './ChessBoard';
-import { Board } from './Board';
+import background from "./img/Background.jpg";
+import Board from './Board.js'
 
 function App() {
-  const startingBoard = new Board()
+  let startingBoard = new Board()
 
   return (
-    <div
-      class="bg_image"
-      style={{
-        backgroundImage: 'url(' + bg + ')',
-        backgroundSize: "cover",
-        height: "100vh",
-        color: "#f5f5f5"
-      }}>
+    <div className="Centered" style={{ backgroundImage: `url(${background})`, 
+    backgroundSize: "cover", height: "100vh"}}>
       <ChessBoard board = {startingBoard}/>
     </div>
   );

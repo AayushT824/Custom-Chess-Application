@@ -1,6 +1,6 @@
-import Piece, { King, Queen, Bishop, Knight, Rook, Pawn} from './Pieces.js';
+import Piece, { King, Queen, Bishop, Knight, Rook, Pawn } from './Pieces.js';
 
-//TO-DO: En Passant & Stalemate
+//TO-DO: En Passant, Pawn Promotion & Stalemate
 export default class Board {
     spaces//2D array of all spaces on the board; TOP LEFT = (0,0), BOTTOM RIGHT = (15,15)
     turn //represents player turn; 1 if white, -1 if black
@@ -10,6 +10,7 @@ export default class Board {
     //default constructor for initial game state
     constructor(board) {
         this.spaces = []
+        const deepClone = require('lodash.clonedeep')
         if (board == undefined) { //default constructor
             this.whiteKingLoc = [0, 4]
             this.blackKingLoc = [7, 4]
@@ -19,31 +20,31 @@ export default class Board {
                 let row = []
                 for (let j = 0; j < 8; j++) {
                     let space = null
-                    if (i == 1) {
+                    if (i === 1) {
                         space = new Space(new Pawn([i, j], -1), [i, j])
                     }
-                    else if (i == 6) {
+                    else if (i === 6) {
                         space = new Space(new Pawn([i, j], 1), [i, j])
                     }
                     //black bank rank
-                    else if (i == 0) {
+                    else if (i === 0) {
                         //inserts all special pieces at appropriate locations
-                        if (j == 0 || j == 7) { const space = new Space(new Rook([i, j], -1), [i, j]) }
-                        else if (j == 1 || j == 6) { const space = new Space(new Knight([i, j], -1), [i, j]) }
-                        else if (j == 2 || j == 5) { const space = new Space(new Bishop([i, j], -1), [i, j]) }
-                        else if (j == 3) { const space = new Space(new Queen([i, j], -1), [i, j]) }
+                        if (j === 0 || j === 7) { space = new Space(new Rook([i, j], -1), [i, j]) }
+                        else if (j === 1 || j === 6) { space = new Space(new Knight([i, j], -1), [i, j]) }
+                        else if (j === 2 || j === 5) { space = new Space(new Bishop([i, j], -1), [i, j]) }
+                        else if (j === 3) { space = new Space(new Queen([i, j], -1), [i, j]) }
                         else {
                             this.blackKingLoc = [i, j]
                             space = new Space(new King([i, j], -1), [i, j])
                         }
                     }
                     //white back rank
-                    else if (i == 7) {
+                    else if (i === 7) {
                         //inserts all special pieces at appropriate locations
-                        if (j == 0 || j == 7) { const space = new Space(new Rook([i, j], 1), [i, j]) }
-                        else if (j == 1 || j == 6) { const space = new Space(new Knight([i, j], 1), [i, j]) }
-                        else if (j == 2 || j == 5) { const space = new Space(new Bishop([i, j], 1), [i, j]) }
-                        else if (j == 3) { const space = new Space(new Queen([i, j], 1), [i, j]) }
+                        if (j === 0 || j === 7) { space = new Space(new Rook([i, j], 1), [i, j]) }
+                        else if (j === 1 || j === 6) { space = new Space(new Knight([i, j], 1), [i, j]) }
+                        else if (j === 2 || j === 5) { space = new Space(new Bishop([i, j], 1), [i, j]) }
+                        else if (j === 3) { space = new Space(new Queen([i, j], 1), [i, j]) }
                         else {
                             this.whiteKingLoc = [i, j]
                             space = new Space(new King([i, j], 1), [i, j])
@@ -60,16 +61,8 @@ export default class Board {
         else { //Makes a board from existing board without referencing given list in structure at all
             this.whiteKingLoc = board.whiteKingLoc
             this.blackKingLoc = board.blackKingLoc
-            this.spaces = board.spaces
-
-            for (let i = 0; i < 8; i++) {
-                const row = []
-                for (let j = 0; j < 8; j++) {
-                    const space = new Space(new Piece(this.spaces[i][j].piece), this.spaces[i][j].piece.loc)
-                    row.push(space)
-                }
-                this.spaces.push(row)
-            }
+            this.turn = board.turn
+            this.spaces = deepClone(board.spaces)
         }
     }
 
@@ -100,10 +93,10 @@ export default class Board {
         const blackKing = this.spaces[this.blackKingLoc[0]][this.blackKingLoc[1]]
         const whiteKing = this.spaces[this.whiteKingLoc[0]][this.whiteKingLoc[1]]
 
-        if (blackKing.moveSet()[0].length == 0 && this.hasCheck() == -1) {
+        if (blackKing.moveSet(this).length == 0 && this.hasCheck() == -1) {
             return -1
         }
-        else if (whiteKing.moveSet()[0].length == 0 && this.hasCheck() == 1) {
+        else if (whiteKing.moveSet(this).length == 0 && this.hasCheck() == 1) {
             return 1
         }
         return 0
@@ -115,6 +108,16 @@ export default class Board {
         const fromSpace = this.spaces[fromLoc[0]][fromLoc[1]]
         const toSpace = this.spaces[toLoc[0]][toLoc[1]]
 
+        if (fromSpace.piece == null) {
+            return this
+        }
+
+        //updates king location if necessary
+        if (fromSpace.piece instanceof King) {
+            if (fromSpace.piece.color == 1) { this.whiteKingLoc = toSpace.loc }
+            else { this.blackKingLoc = toSpace.loc }
+        }
+
         const temp = fromSpace.piece
         fromSpace.piece = null
         temp.loc = toSpace.loc
@@ -125,8 +128,9 @@ export default class Board {
     //Evaluates whether or not the fromSpace's piece can move to the toSpace
     isValidMove(fromSpace, toSpace) {
         const piece = fromSpace.piece
+        const possibleMoves = piece.moveSet(this)
 
-        return piece.moveSet(this).contains(toSpace) && !(piece == null) && !(toSpace.piece == null)
+        return piece != null && piece.color == this.turn && (toSpace.piece == null) && possibleMoves.some(space => space[0] === toSpace.loc[0] && space[1] === toSpace.loc[1])
     }
 
     //Checks if a player's move puts themselves in check, thus making it illegal
@@ -148,13 +152,25 @@ export default class Board {
                 if (space.piece != null) {
                     const enemyKingLoc = space.piece.oppositeKing(this)
                     //checks if spaces threatened by this piece includes enemy king space
-                    if (space.piece.moveset()[1].contains(enemyKingLoc)) {
+                    const moves = space.piece.threatened(this)
+                    if (Board.containsLoc(moves, enemyKingLoc)) {
                         return -1 * space.piece.color
                     }
                 }
             })
         })
         return 0
+    }
+
+    //Checks if given list of locations contains a specific location
+    //Checks by contents, not reference
+    static containsLoc(list, loc) {
+        list.forEach(item => {
+            if (item[0] == loc[0] && item[1] == loc[1]) {
+                return true
+            }
+        })
+        return false
     }
 }
 
@@ -164,7 +180,7 @@ class Space {
 
     constructor(piece, loc) {
         this.piece = piece
-        if (loc[0] > 7 || loc[0] < 0 || loc[1] > 7 || loc[1] < 0) {
+        if (loc[0] > 7 || loc[0] < 0 || loc[1] > 7 || loc[1] < 0 || loc[0] == null || loc[1] == null) {
             throw ("Invalid coordinates given to Space constructor")
         }
         this.loc = loc
