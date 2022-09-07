@@ -70,36 +70,69 @@ export default class Board {
     //checks if move is legal
     move(fromSpace, toSpace) {
         if (this.isValidMove(fromSpace, toSpace)) {
-            //updates king location if necessary
-            if (fromSpace.piece instanceof King) {
-                if (fromSpace.piece.color == 1) { this.whiteKingLoc = toSpace.loc }
-                else { this.blackKingLoc = toSpace.loc }
-            }
+            //updates king location if necessary, as well as pawn hasMoved field
+            fromSpace.piece.updateLoc(toSpace)
+
             this.turn *= -1
             const temp = fromSpace.piece
             fromSpace.piece = null
             temp.loc = toSpace.loc
             toSpace.piece = temp
 
-            return this
+            return true
         }
         else {
-            return
+            return false
         }
     }
 
-    //returns 1 if white has won, -1 if black has won and 0 otherwise
-    hasWinner() {
-        const blackKing = this.spaces[this.blackKingLoc[0]][this.blackKingLoc[1]]
-        const whiteKing = this.spaces[this.whiteKingLoc[0]][this.whiteKingLoc[1]]
+    //promotes pawn to given piece
+    promote(piece) {
+        this.spaces[0].forEach(space =>{
+            if (space.piece != null) {
+                space.piece.promote(this, piece)
+            }
+        })
+        this.spaces[7].forEach(space =>{
+            if (space.piece != null) {
+                space.piece.promote(this, piece)
+            }
+        })
+    }
 
-        if (blackKing.moveSet(this).length == 0 && this.hasCheck() == -1) {
-            return -1
-        }
-        else if (whiteKing.moveSet(this).length == 0 && this.hasCheck() == 1) {
+    //returns 1 if white has won, -1 if black has won, 2 if stalemate and 0 otherwise
+    hasWinner() {
+
+        if (this.hasCheck() == -1 && !this.possibleMove(-1)) {
             return 1
         }
-        return 0
+        else if (this.hasCheck() == 1 && !this.possibleMove(1)) {
+            return -1
+        }
+        else if(!this.possibleMove(1) && this.turn == 1|| !this.possibleMove(-1) && this.turn == -1) {
+            return 2
+        }
+        else {
+            return 0
+        }
+    }
+
+    possibleMove(color) {
+        var possible = false
+
+        this.spaces.forEach(row => {
+            row.forEach(space => {
+                if (space.piece != null && space.piece.color == color) {
+                    space.piece.moveSet(this).forEach(move => {
+                        if (!this.willCauseSelfCheck(space.piece, this.spaces[move[0]][move[1]])) {
+                            possible = true
+                        }
+                    })
+                }
+            })
+        })
+
+        return possible
     }
 
     //moves a piece without checking if proper criteria are met
@@ -128,9 +161,9 @@ export default class Board {
     //Evaluates whether or not the fromSpace's piece can move to the toSpace
     isValidMove(fromSpace, toSpace) {
         const piece = fromSpace.piece
-        const possibleMoves = piece.moveSet(this)
+        const possibleMoves = piece.moveSet(this)    
 
-        return piece != null && piece.color == this.turn && (toSpace.piece == null) && possibleMoves.some(space => space[0] === toSpace.loc[0] && space[1] === toSpace.loc[1])
+        return piece != null && piece.color == this.turn && possibleMoves.some(space => space[0] === toSpace.loc[0] && space[1] === toSpace.loc[1]) && !this.willCauseSelfCheck(piece, toSpace)
     }
 
     //Checks if a player's move puts themselves in check, thus making it illegal
@@ -147,30 +180,34 @@ export default class Board {
 
     //returns 1 if white is in check, -1 if black is in check, and 0 if no player is in check
     hasCheck() {
+        let checked = 0
         this.spaces.forEach(row => {
             row.forEach(space => {
                 if (space.piece != null) {
                     const enemyKingLoc = space.piece.oppositeKing(this)
+
                     //checks if spaces threatened by this piece includes enemy king space
-                    const moves = space.piece.threatened(this)
+                    const moves = space.piece.moveSet(this)
                     if (Board.containsLoc(moves, enemyKingLoc)) {
-                        return -1 * space.piece.color
+                        checked = -1 * space.piece.color
                     }
                 }
             })
         })
-        return 0
+        return checked
+        
     }
 
     //Checks if given list of locations contains a specific location
     //Checks by contents, not reference
     static containsLoc(list, loc) {
+        let found = false
         list.forEach(item => {
             if (item[0] == loc[0] && item[1] == loc[1]) {
-                return true
+                found = true
             }
         })
-        return false
+        return found
     }
 }
 
