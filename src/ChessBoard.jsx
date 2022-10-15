@@ -1,4 +1,3 @@
-import Board from './Board.js'
 import React, { useState } from 'react';
 import blackQueen from "./img/queen.png";
 import blackBishop from "./img/bishop.png";
@@ -20,8 +19,8 @@ const ChessBoard = (props) => {
 
     //Chooses a color for the space at the given location (loc)
     const spaceColor = (loc) => {
-        if ((loc[0] + 1) % 2 == 1) { //column
-            if ((loc[1] + 1) % 2 == 1) { //row
+        if ((loc[0] + 1) % 2 === 1) { //column
+            if ((loc[1] + 1) % 2 === 1) { //row
                 return "rgb(215,189,201)"
             }
             else {
@@ -29,7 +28,7 @@ const ChessBoard = (props) => {
             }
         }
         else {
-            if ((loc[1] + 1) % 2 == 1) { //row
+            if ((loc[1] + 1) % 2 === 1) { //row
                 return "rgb(153,1,73)"
             }
             else {
@@ -60,7 +59,7 @@ const ChessBoard = (props) => {
             }
         }
 
-        if (board.hasWinner() != 0 || pawnPromotion != 0) {
+        if (board.hasWinner() !== 0 || pawnPromotion !== 0) {
             frozen = true
         }
     }
@@ -83,9 +82,7 @@ const ChessBoard = (props) => {
                             {row.map(space =>
                                 <td align="center" style={{ backgroundColor: spaceColor(space.loc) }}
                                     onClick={() => handleClick(space)} height="80" width="80" key={space.loc[1]}>
-                                    {space.piece != null &&
-                                        chooseImage(space.piece)
-                                    }
+                                        {chooseImage(space.piece)}
                                 </td>
                             )}
                         </tr>
@@ -101,22 +98,22 @@ const ChessBoard = (props) => {
                     <tr>
                         <td key={'Queen'} onClick={() => promoteBoard('Queen')} height="160" width="160">
                             <div className='Centered'>
-                                <img src={color == 1 ? whiteQueen : blackQueen} height={140} width={140}/>
+                                <img src={color === 1 ? whiteQueen : blackQueen} height={140} width={140}/>
                             </div>
                         </td>
                         <td key={'Bishop'} onClick={() => promoteBoard('Bishop')} height="160" width="160">
                             <div className='Centered'>
-                                <img src={color == 1 ? whiteBishop : blackBishop} height={140} width={140} />
+                                <img src={color === 1 ? whiteBishop : blackBishop} height={140} width={140} />
                             </div>
                         </td>
                         <td key={'Knight'} onClick={() => promoteBoard('Knight')} height="160" width="160">
                             <div className='Centered'>
-                                <img src={color == 1 ? whiteKnight : blackKnight} height={140} width={140} />
+                                <img src={color === 1 ? whiteKnight : blackKnight} height={140} width={140} />
                             </div>
                         </td>
                         <td key={'Rook'} onClick={() => promoteBoard('Rook')} height="160" width="160">
                             <div className='Centered'>
-                                <img src={color == 1 ? whiteRook : blackRook} height={140} width={140} />
+                                <img src={color === 1 ? whiteRook : blackRook} height={140} width={140} />
                             </div>
                         </td>
                     </tr>
@@ -124,7 +121,7 @@ const ChessBoard = (props) => {
             </table>
         </div>
 
-    if (pawnPromotion == 1) {
+    if (pawnPromotion === 1) {
         return (
             <div>
                 {renderedBoard()}
@@ -132,7 +129,7 @@ const ChessBoard = (props) => {
             </div>
         );
     }
-    else if (pawnPromotion == -1) {
+    else if (pawnPromotion === -1) {
         return (
             <div>
                 {renderedBoard()}

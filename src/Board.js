@@ -1,4 +1,4 @@
-import Piece, { King, Queen, Bishop, Knight, Rook, Pawn } from './Pieces.js';
+import { King, Queen, Bishop, Knight, Rook, Pawn, Empty } from './Pieces.js';
 
 //TO-DO: En Passant, Pawn Promotion & Stalemate
 export default class Board {
@@ -11,7 +11,7 @@ export default class Board {
     constructor(board) {
         this.spaces = []
         const deepClone = require('lodash.clonedeep')
-        if (board == undefined) { //default constructor
+        if (board === undefined) { //default constructor
             this.whiteKingLoc = [0, 4]
             this.blackKingLoc = [7, 4]
             this.turn = 1
@@ -51,7 +51,7 @@ export default class Board {
                         }
                     }
                     else { //empty space case
-                        space = new Space(null, [i, j])
+                        space = new Space(new Empty([i, j]), [i, j])
                     }
                     row.push(space)
                 }
@@ -69,13 +69,15 @@ export default class Board {
     //moves piece by modifying this board and returning the new board as well
     //checks if move is legal
     move(fromSpace, toSpace) {
+        console.log(toSpace)
         if (this.isValidMove(fromSpace, toSpace)) {
             //updates king location if necessary, as well as pawn hasMoved field
-            fromSpace.piece.updateLoc(toSpace)
+            console.log(toSpace)
+            fromSpace.piece.updateLoc(this, toSpace)
 
             this.turn *= -1
             const temp = fromSpace.piece
-            fromSpace.piece = null
+            fromSpace.piece = new Empty(fromSpace.loc)
             temp.loc = toSpace.loc
             toSpace.piece = temp
 
@@ -88,28 +90,24 @@ export default class Board {
 
     //promotes pawn to given piece
     promote(piece) {
-        this.spaces[0].forEach(space =>{
-            if (space.piece != null) {
-                space.piece.promote(this, piece)
-            }
+        this.spaces[0].forEach(space => {
+            space.piece.promote(this, piece)
         })
-        this.spaces[7].forEach(space =>{
-            if (space.piece != null) {
-                space.piece.promote(this, piece)
-            }
+        this.spaces[7].forEach(space => {
+            space.piece.promote(this, piece)
         })
     }
 
     //returns 1 if white has won, -1 if black has won, 2 if stalemate and 0 otherwise
     hasWinner() {
 
-        if (this.hasCheck() == -1 && !this.possibleMove(-1)) {
+        if (this.hasCheck() === -1 && !this.possibleMove(-1)) {
             return 1
         }
-        else if (this.hasCheck() == 1 && !this.possibleMove(1)) {
+        else if (this.hasCheck() === 1 && !this.possibleMove(1)) {
             return -1
         }
-        else if(!this.possibleMove(1) && this.turn == 1|| !this.possibleMove(-1) && this.turn == -1) {
+        else if((!this.possibleMove(1) && this.turn === 1) || (!this.possibleMove(-1) && this.turn === -1)) {
             return 2
         }
         else {
@@ -122,7 +120,7 @@ export default class Board {
 
         this.spaces.forEach(row => {
             row.forEach(space => {
-                if (space.piece != null && space.piece.color == color) {
+                if (space.piece.color === color) {
                     space.piece.moveSet(this).forEach(move => {
                         if (!this.willCauseSelfCheck(space.piece, this.spaces[move[0]][move[1]])) {
                             possible = true
@@ -141,41 +139,30 @@ export default class Board {
         const fromSpace = this.spaces[fromLoc[0]][fromLoc[1]]
         const toSpace = this.spaces[toLoc[0]][toLoc[1]]
 
-        if (fromSpace.piece == null) {
-            return this
-        }
-
         //updates king location if necessary
-        if (fromSpace.piece instanceof King) {
-            if (fromSpace.piece.color == 1) { this.whiteKingLoc = toSpace.loc }
-            else { this.blackKingLoc = toSpace.loc }
-        }
+        fromSpace.piece.updateLoc(this, toSpace)
 
-        const temp = fromSpace.piece
-        fromSpace.piece = null
-        temp.loc = toSpace.loc
-        toSpace.piece = temp
+        fromSpace.piece.modify(fromSpace, toSpace)
+
         return this
     }
 
     //Evaluates whether or not the fromSpace's piece can move to the toSpace
     isValidMove(fromSpace, toSpace) {
         const piece = fromSpace.piece
-        const possibleMoves = piece.moveSet(this)    
+        const possibleMoves = piece.moveSet(this)   
 
-        return piece != null && piece.color == this.turn && possibleMoves.some(space => space[0] === toSpace.loc[0] && space[1] === toSpace.loc[1]) && !this.willCauseSelfCheck(piece, toSpace)
+        return piece.canMove(this) && piece.color === this.turn && possibleMoves.some(space => space[0] === toSpace.loc[0] && space[1] === toSpace.loc[1]) && !this.willCauseSelfCheck(piece, toSpace)
     }
 
     //Checks if a player's move puts themselves in check, thus making it illegal
     willCauseSelfCheck(piece, toSpace) {
-        if (piece == null) { return false }
-
         //player who made this move
         const player = piece.color
         //creates copy of board with this move having been made
         const newBoard = new Board(this).forceMove(piece.loc, toSpace.loc)
 
-        return newBoard.hasCheck() == player
+        return newBoard.hasCheck() === player
     }
 
     //returns 1 if white is in check, -1 if black is in check, and 0 if no player is in check
@@ -183,7 +170,7 @@ export default class Board {
         let checked = 0
         this.spaces.forEach(row => {
             row.forEach(space => {
-                if (space.piece != null) {
+                if (space.piece.color !== 0) {
                     const enemyKingLoc = space.piece.oppositeKing(this)
 
                     //checks if spaces threatened by this piece includes enemy king space
@@ -203,7 +190,7 @@ export default class Board {
     static containsLoc(list, loc) {
         let found = false
         list.forEach(item => {
-            if (item[0] == loc[0] && item[1] == loc[1]) {
+            if (item[0] === loc[0] && item[1] === loc[1]) {
                 found = true
             }
         })
@@ -218,7 +205,8 @@ class Space {
     constructor(piece, loc) {
         this.piece = piece
         if (loc[0] > 7 || loc[0] < 0 || loc[1] > 7 || loc[1] < 0 || loc[0] == null || loc[1] == null) {
-            throw ("Invalid coordinates given to Space constructor")
+            // eslint-disable-next-line no-throw-literal
+            throw("Invalid coordinates given to Space constructor")
         }
         this.loc = loc
     }

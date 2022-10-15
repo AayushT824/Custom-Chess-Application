@@ -88,11 +88,11 @@ export default class Piece {
 
     //further abstracts behavior from spacesInDirection method
     incrementSpace(nextSpace, moves) {
-        if (nextSpace.piece == null) {
+        if (nextSpace.piece.color === 0) {
             moves.push([nextSpace.loc[0], nextSpace.loc[1]])
             return true
         }
-        else if (nextSpace.piece.color == this.color) { return false }
+        else if (nextSpace.piece.color === this.color) { return false }
         else { //if nextSpace's piece is an enemy piece
             moves.push([nextSpace.loc[0], nextSpace.loc[1]])
             return false
@@ -101,7 +101,7 @@ export default class Piece {
 
     //returns location of enemy king to this piece
     oppositeKing(board) {
-        if (this.color == 1) { //white
+        if (this.color === 1) { //white
             return board.blackKingLoc
         }
         else { //black
@@ -109,27 +109,56 @@ export default class Piece {
         }
     }
 
-    updateLoc(toSpace) {}
+    updateLoc(board, toSpace) {}
 
     needPromotion() {
         return 0
     }
 
     promote() {}
+
+    modify(fromSpace, toSpace) {
+        const temp = fromSpace.piece
+        fromSpace.piece = new Empty(fromSpace.loc)
+        temp.loc = toSpace.loc
+        toSpace.piece = temp
+    }
+
+    canMove(board) {
+        console.log(this.moveSet(board).length)
+        return this.moveSet(board).length > 0
+    }
+}
+
+export class Empty extends Piece {
+    constructor(loc) {
+        super(loc, 0)
+    }
+
+    modify(fromSpace, toSpace) {}
+
+    getImage() {
+        return
+    }
+
+    moveSet(board) {
+        return []
+    }
+
+    canMove() {
+        return false
+    }
 }
 
 export class King extends Piece {
-    constructor(loc, color, piece) {
-        super(loc, color, piece);
-    }
 
-    updateLoc(toSpace) {
-        if (this.color == 1) { this.whiteKingLoc = toSpace.loc }
-        else { this.blackKingLoc = toSpace.loc }
+    updateLoc(board, toSpace) {
+        if (this.color === 1) { board.whiteKingLoc = toSpace.loc }
+        else { board.blackKingLoc = toSpace.loc }
     }
 
     getImage() {
-        if (this.color == 1) {
+        if (this.color === 1) {
             return (
                 <img src={whiteKing} height={this.SIZE} width={this.SIZE} className = "Centered"/>
             )
@@ -161,12 +190,8 @@ export class King extends Piece {
 }
 
 export class Queen extends Piece {
-    constructor(loc, color, piece) {
-        super(loc, color, piece);
-    }
-
     getImage() {
-        if (this.color == 1) {
+        if (this.color === 1) {
             return (
                 <img src={whiteQueen} height={this.SIZE} width={this.SIZE} className = "Centered"/>
             )
@@ -185,12 +210,8 @@ export class Queen extends Piece {
 }
 
 export class Bishop extends Piece {
-    constructor(loc, color, piece) {
-        super(loc, color, piece);
-    }
-
     getImage() {
-        if (this.color == 1) {
+        if (this.color === 1) {
             return (
                 <img src={whiteBishop} height={this.SIZE} width={this.SIZE} className = "Centered"/>
             )
@@ -209,12 +230,9 @@ export class Bishop extends Piece {
 }
 
 export class Knight extends Piece {
-    constructor(loc, color, piece) {
-        super(loc, color, piece);
-    }
 
     getImage() {
-        if (this.color == 1) {
+        if (this.color === 1) {
             return (
                 <img src={whiteKnight} height={this.SIZE} width={this.SIZE} className = "Centered"/>
             )
@@ -246,12 +264,8 @@ export class Knight extends Piece {
 }
 
 export class Rook extends Piece {
-    constructor(loc, color, piece) {
-        super(loc, color, piece);
-    }
-
     getImage() {
-        if (this.color == 1) {
+        if (this.color === 1) {
             return (
                 <img src={whiteRook} height={this.SIZE} width={this.SIZE} className = "Centered"/>
             )
@@ -270,23 +284,14 @@ export class Rook extends Piece {
 }
 
 export class Pawn extends Piece {
-    constructor(loc, color, piece) {
-        super(loc, color, piece)
-        if (piece == undefined) {
-            this.hasMoved = false
-        }
-        else {
-            this.hasMoved = piece.hasMoved
-        }
-    }
 
-    updateLoc(toSpace) {
+    updateLoc(board, toSpace) {
         this.hasMoved = true
     }
 
     //determines if pawn promotion is now necessary
     needPromotion() {
-        if (this.loc[0] == 0 || this.loc[0] == 7) {
+        if (this.loc[0] === 0 || this.loc[0] === 7) {
             return this.color
         }
         else {
@@ -297,22 +302,22 @@ export class Pawn extends Piece {
     //Promotes pawn to given piece
     promote(board, piece) {
         if (!this.needPromotion()) {
-            throw 'Cannot promote pawn without proper positioning'
+            throw ('Cannot promote pawn without proper positioning')
         }
 
         const x = this.loc[0]
         const y = this.loc[1]
 
-        if (piece == 'Queen') {
+        if (piece === 'Queen') {
             board.spaces[x][y].piece = new Queen([x,y], this.color)
         }
-        else if (piece == 'Bishop') {
+        else if (piece === 'Bishop') {
             board.spaces[x][y].piece = new Bishop([x,y], this.color)
         }
-        else if (piece == 'Knight') {
+        else if (piece === 'Knight') {
             board.spaces[x][y].piece = new Knight([x,y], this.color)
         }
-        else if (piece == 'Rook') {
+        else if (piece === 'Rook') {
             board.spaces[x][y].piece = new Rook([x,y], this.color)
         }
 
@@ -337,47 +342,47 @@ export class Pawn extends Piece {
         let possibleMoves = []
 
         //if color is white (starts on bottom)
-        if (this.color == 1) {
-            if (x == 0) {
+        if (this.color === 1) {
+            if (x === 0) {
                 return possibleMoves
             }
 
             //scenarios where only one space forward is a legal move
-            if (board.spaces[x - 1][y].piece == null && (this.hasMoved || (!this.hasMoved && board.spaces[x - 2][y].piece != null))) {
+            if (board.spaces[x - 1][y].piece.color === 0 && (this.hasMoved || (!this.hasMoved && board.spaces[x - 2][y].piece.color !== 0))) {
                 possibleMoves = [[x - 1, y]]
             }
             //scenarios where one and two spaces forward are legal moves
-            else if (!this.hasMoved && board.spaces[x - 1][y].piece == null && board.spaces[x - 2][y].piece == null) {
+            else if (!this.hasMoved && board.spaces[x - 1][y].piece.color === 0 && board.spaces[x - 2][y].piece.color === 0) {
                 possibleMoves = [[x - 1, y], [x - 2, y]]
             }
 
             //can take pieces diagonally?
-            if (x - 1 >= 0 && x - 1 <= 7 && y - 1 >= 0 && y - 1 <= 7 && board.spaces[x - 1][y - 1].piece != null && board.spaces[x - 1][y - 1].piece.color != 1) {
+            if (x - 1 >= 0 && x - 1 <= 7 && y - 1 >= 0 && y - 1 <= 7 && board.spaces[x - 1][y - 1].piece.color !== 0 && board.spaces[x - 1][y - 1].piece.color !== 1) {
                 possibleMoves.push([x - 1, y - 1])
             }
-            if (x - 1 >= 0 && x - 1 <= 7 && y + 1 >= 0 && y + 1 <= 7 && board.spaces[x - 1][y + 1].piece != null && board.spaces[x - 1][y + 1].piece.color != 1) {
+            if (x - 1 >= 0 && x - 1 <= 7 && y + 1 >= 0 && y + 1 <= 7 && board.spaces[x - 1][y + 1].piece.color !== 0 && board.spaces[x - 1][y + 1].piece.color !== 1) {
                 possibleMoves.push([x - 1, y + 1])
             }
         }
         else {
-            if (x == 7) {
+            if (x === 7) {
                 return possibleMoves
             }
 
             //scenarios where only one space forward is a legal move
-            if (board.spaces[x + 1][y].piece === null && (this.hasMoved || (!this.hasMoved && board.spaces[x + 2][y].piece != null))) {
+            if (board.spaces[x + 1][y].piece.color === 0 && (this.hasMoved || (!this.hasMoved && board.spaces[x + 2][y].piece.color !== 0))) {
                 possibleMoves = [[x + 1, y]]
             }
             //scenarios where one and two spaces forward are legal moves
-            else if (!this.hasMoved && board.spaces[x + 1][y].piece == null && board.spaces[x + 2][y].piece == null) {
+            else if (!this.hasMoved && board.spaces[x + 1][y].piece.color === 0 && board.spaces[x + 2][y].piece.color === 0) {
                 possibleMoves = [[x + 1, y], [x + 2, y]]
             }
 
             //can take pieces diagonally?
-            if (x + 1 >= 0 && x + 1 <= 7 && y + 1 >= 0 && y + 1 <= 7 && board.spaces[x + 1][y + 1].piece != null && board.spaces[x + 1][y + 1].piece.color != 0) {
+            if (x + 1 >= 0 && x + 1 <= 7 && y + 1 >= 0 && y + 1 <= 7 && board.spaces[x + 1][y + 1].piece.color !== 0 && board.spaces[x + 1][y + 1].piece.color !== 0) {
                 possibleMoves.push([x + 1, y + 1])
             }
-            if (x + 1 >= 0 && x + 1 <= 7 && y - 1 >= 0 && y - 1 <= 7 && board.spaces[x + 1][y - 1].piece != null && board.spaces[x + 1][y - 1].piece.color != 0) {
+            if (x + 1 >= 0 && x + 1 <= 7 && y - 1 >= 0 && y - 1 <= 7 && board.spaces[x + 1][y - 1].piece.color !== 0 && board.spaces[x + 1][y - 1].piece.color !== 0) {
                 possibleMoves.push([x + 1, y - 1])
             }
         }
