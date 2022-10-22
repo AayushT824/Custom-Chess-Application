@@ -4,6 +4,9 @@ Completely custom chess application built with ReactJS. Supports basic moves, ch
 Still plan to introduce enums to clean up code and polish up some elements of the UI.
 
 Below are some images taken during gameplay:
-![image](https://user-images.githubusercontent.com/67922789/197362315-2311a829-ae1b-4969-8499-1393ff5f00c1.png) 
-![image](https://user-images.githubusercontent.com/67922789/197362352-00e4b08a-fe63-4552-846c-47785df1cf9e.png)
-![image](https://user-images.githubusercontent.com/67922789/197362389-47e7ed08-7893-42d1-9ffb-c42cb746fe84.png)
+
+![image](https://user-images.githubusercontent.com/67922789/197362512-89ce075a-f8fd-49a2-b3d2-e2ef8a53f32c.png)
+
+![image](https://user-images.githubusercontent.com/67922789/197362539-49f59715-e081-4a5b-93d7-4b19dfacf4b4.png)
+
+![image](https://user-images.githubusercontent.com/67922789/197362633-cb86ff7e-2039-400e-859c-a4b313b647ff.png)
